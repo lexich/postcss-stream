@@ -1,0 +1,41 @@
+{
+  "name": "postcss-stream",
+  "version": "0.0.0",
+  "description": "PostCSS plugin add support stream",
+  "keywords": [
+    "postcss",
+    "css",
+    "postcss-plugin",
+    "stream"
+  ],
+  "author": "Efremov Alexey <lexich121@gmail.com>",
+  "license": "MIT",
+  "repository": "lexich/postcss-stream",
+  "bugs": {
+    "url": "https://github.com/lexich/postcss-stream/issues"
+  },
+  "homepage": "https://github.com/lexich/postcss-stream",
+  "dependencies": {
+    "@types/core-js": "^0.9.35",
+    "postcss": "^5.1.0"
+  },
+  "devDependencies": {
+    "ava": "^0.15.2",
+    "eslint": "^3.1.1",
+    "eslint-config-postcss": "^2.0.2",
+    "ts-node": "^1.7.2",
+    "tslint": "^4.1.1",
+    "typescript": "^2.1.4"
+  },
+  "scripts": {
+    "test": "npm run tslint && npm run compile && npm run ava",
+    "tslint": "node_modules/.bin/tslint src/*.ts",
+    "ava": "node_modules/.bin/ava ./tests/*.js",
+    "yaspeller": "node_modules/.bin/yaspeller .",
+    "compile": "rm -rf lib && node_modules/.bin/tsc --project tsconfig.json -d  --outDir lib --sourceRoot src",
+    "watch": "node_modules/.bin/tsc -watch --project tsconfig.json"
+  },
+  "eslintConfig": {
+    "extends": "eslint-config-postcss/es5"
+  }
+}

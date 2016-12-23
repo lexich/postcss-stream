@@ -1,5 +1,4 @@
 import * as postcss from 'postcss';
-import CDeclaration from '../src/types/declaration';
 import Walker from "../src/Walker";
 import test, { ContextualTestContext } from 'ava';
 
@@ -23,7 +22,7 @@ test('simple change decl with [color]', t => {
             query: {
                 decl: 'color'
             },
-            fn(child: CDeclaration) {
+            fn(child: postcss.Declaration) {
                 child.value = 'red';
             }
         }]
@@ -39,7 +38,7 @@ test('simple change decl with all pattern [*]', t => {
                 query: {
                     decl: '*'
                 },
-                fn(child: CDeclaration) {
+                fn(child: postcss.Declaration) {
                     child.value = 'red';
                 }
             }]
@@ -55,7 +54,7 @@ test('simple change decl with array decl', t => {
                 query: {
                     decl: ['color', 'background']
                 },
-                fn(child: CDeclaration) {
+                fn(child: postcss.Declaration) {
                     child.value = 'red';
                 }
             }]
@@ -74,7 +73,7 @@ test('simple change decl with all pattern array decl', t => {
                         { prop: 'z-index', value: '11' }
                     ]
                 },
-                fn(child: CDeclaration) {
+                fn(child: postcss.Declaration) {
                     child.value = 'red';
                 }
             }]
@@ -91,7 +90,7 @@ test('simple change decl with prop', t => {
                 decl: 'color',
                 rule: '.test'
             },
-            fn(child: CDeclaration) {
+            fn(child: postcss.Declaration) {
                 child.value = 'red';
             }
         }]
@@ -107,14 +106,14 @@ test('simple change decl with 2 streams', t => {
                 query: {
                     decl: [{ prop: 'color', value: '#000' }]
                 },
-                fn(child: CDeclaration) {
+                fn(child: postcss.Declaration) {
                     child.value = 'red';
                 }
             }, {
                 query: {
                     decl: [{ prop: 'z-index', value: '10' }]
                 },
-                fn(child: CDeclaration) {
+                fn(child: postcss.Declaration) {
                     child.value = '11';
                 }
             }]
@@ -130,7 +129,7 @@ test('overwriting changes decl with 2 streams', t => {
                 query: {
                     decl: [{ prop: 'color', value: '#000' }]
                 },
-                fn(child: CDeclaration) {                    
+                fn(child: postcss.Declaration) {                    
                     child.value = 'red';
                 }
             }]
@@ -139,7 +138,7 @@ test('overwriting changes decl with 2 streams', t => {
                 query: {
                     decl: [{ prop: 'color', value: 'red' }]
                 },
-                fn(child: CDeclaration) {
+                fn(child: postcss.Declaration) {
                     child.value = 'green';
                 }
             }]

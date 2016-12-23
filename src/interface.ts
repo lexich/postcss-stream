@@ -1,12 +1,11 @@
 import { Node } from "postcss";
-import CNode from "./types/node";
 export interface StreamQuery {
     decl?: string | string[] | QDeclaration | QDeclaration[];
     rule?: string;
 }
 
 export  interface StreamFunctor {
-    (child: CNode | Node): void;
+    (child: Node): void;
 }
 
 
@@ -47,6 +46,7 @@ export type QRule = StreamRule;
 
 export interface MNode extends Node {
     __meta__?: {
-        expressions: QueryExpression[];
+        expressions?: QueryExpression[];
+        patch?: boolean;
     };
 }

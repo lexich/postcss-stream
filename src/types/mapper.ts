@@ -1,12 +1,24 @@
-import {Node} from "postcss";
+import {Node, Declaration} from "postcss";
 import {MNode} from "../interface";
-import CDeclaration from "./declaration";
-import CNode from "./node";
 
-export default function (node: MNode, updateModel: ((n: Node)=> void)): CNode {
+export default function (node: MNode, updateModel: ((n: Node)=> void)): MNode {
     if (node.type === "decl") {
-        return new CDeclaration(updateModel, node);
-    } else {
-        return new CNode(updateModel, node);
-    }
+        if (!node.__meta__.patch) {
+            node.__meta__.patch = true;
+            (node as any).__value = (node as Declaration).value;
+            Object.defineProperty(node, "value", {
+                get() {
+                    return this.__value;
+                },
+                set(value) {
+                    updateModel(this);
+                    this.__value = value;
+                },
+                enumerable: true,
+                configurable: true
+            });
+            
+        } 
+    } 
+    return node;
 }

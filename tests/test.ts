@@ -1,18 +1,13 @@
 import * as postcss from 'postcss';
-import CDeclaration from '../src/declaration';
-import test, { ContextualTestContext }    from 'ava';
+import CDeclaration from '../src/types/declaration';
+import Walker from "../src/Walker";
+import test, { ContextualTestContext } from 'ava';
 
-import plugin, {Options} from '../src/';
+import plugin, {Options, createWalker} from '../src/';
 
-function run(t: ContextualTestContext, input: string, output: string, opts?: Options | Options[]) {
-
-    const plugins = !opts ? [plugin()] :
-                    Array.isArray(opts) ? (opts as Options[]).map((p, i, arr)=> {
-                        return plugin(p);
-                    }) :
-                    plugin(opts);
-
-    return postcss(plugins as postcss.Plugin<any>[]).process(input)
+function run(t: ContextualTestContext, input: string, output: string, opts: Options | Options[]) {
+    const walkers: Walker[] = Array.isArray(opts) ? opts.map(createWalker) : [createWalker(opts)];
+    return postcss(plugin(walkers)).process(input)
         .then( result => {
             t.deepEqual(result.css, output);
             t.deepEqual(result.warnings().length, 0);
@@ -135,7 +130,7 @@ test('overwriting changes decl with 2 streams', t => {
                 query: {
                     decl: [{ prop: 'color', value: '#000' }]
                 },
-                fn(child: CDeclaration) {
+                fn(child: CDeclaration) {                    
                     child.value = 'red';
                 }
             }]

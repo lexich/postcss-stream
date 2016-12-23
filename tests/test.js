@@ -3,12 +3,8 @@ var postcss = require("postcss");
 var ava_1 = require("ava");
 var _1 = require("../src/");
 function run(t, input, output, opts) {
-    var plugins = !opts ? [_1.default()] :
-        Array.isArray(opts) ? opts.map(function (p, i, arr) {
-            return _1.default(p);
-        }) :
-            _1.default(opts);
-    return postcss(plugins).process(input)
+    var walkers = Array.isArray(opts) ? opts.map(_1.createWalker) : [_1.createWalker(opts)];
+    return postcss(_1.default(walkers)).process(input)
         .then(function (result) {
         t.deepEqual(result.css, output);
         t.deepEqual(result.warnings().length, 0);

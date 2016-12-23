@@ -1,5 +1,5 @@
 import { Node } from "postcss";
-import CNode from "./node";
+import CNode from "./types/node";
 export interface StreamQuery {
     decl?: string | string[] | QDeclaration | QDeclaration[];
     rule?: string;

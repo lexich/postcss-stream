@@ -3,18 +3,34 @@ import { Query, Stream, LinkedNodes, QueryExpression, MNode, } from "./interface
 import appendNodeToBuffer from "./appendNodeToBuffer";
 import processQuery from "./processQuery";
 import match from "./match";
-import mapper from "./mapper";
+import mapper from "./types/mapper";
 
 export default class Walker {
     private query: Query = { decl: [], rule: [] };
     private nextWalker?: Walker;    
+    private prevWalker?: Walker;    
     private updateNodeList: LinkedNodes<Node>;
     
-    constructor(private streams: Stream[], nextWalker?: Walker) {
-        this.nextWalker = nextWalker;
+    constructor(private streams: Stream[], prevWalker?: Walker) {
+        this.setPrevWalker(prevWalker);
         for (let stream of streams) {
             this.query = processQuery(stream, this.query);
         }
+    }
+
+    getPrevWalker() {
+        return this.prevWalker;
+    }
+
+    setPrevWalker(prevWalker?: Walker) {
+        this.prevWalker = prevWalker;
+        if (prevWalker) {
+            prevWalker.setNextWalker(this);
+        }
+    }
+
+    setNextWalker(nextWalker: Walker) {
+        this.nextWalker = nextWalker;
     }
 
     updateModel = (node: Node) => {

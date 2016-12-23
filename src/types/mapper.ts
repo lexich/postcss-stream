@@ -1,5 +1,5 @@
 import {Node} from "postcss";
-import {MNode} from "./interface";
+import {MNode} from "../interface";
 import CDeclaration from "./declaration";
 import CNode from "./node";
 

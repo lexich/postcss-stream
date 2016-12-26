@@ -2,7 +2,7 @@ import {
     StreamDeclaration, QDeclaration, StreamRule, QRule, 
     Stream, Query, QueryExpression, MNode
 } from "./interface";
-import Walker from "./walker";
+import StreamPipe from "./walker";
 import { init, add } from "./linkedlist";
 
 export function processDecl(decl: StreamDeclaration) : QDeclaration[] {
@@ -37,7 +37,7 @@ export function expressionByType(query: Query, type: string) {
            type === "rule" ? query.rule : null;
 }
 
-export default function processQuery(stream: Stream, streamQuery: Query, walker: Walker) : Query {
+export default function processQuery(stream: Stream, streamQuery: Query, walker: StreamPipe) : Query {
     const { query, fn } = stream;
     const expr: QueryExpression = { 
         fn, walker,

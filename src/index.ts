@@ -1,17 +1,17 @@
 import * as postcss from "postcss";
-import Walker from "./walker";
+import StreamPipe from "./walker";
 import { Stream } from "./interface";
 
 export interface Options {
     streams: Stream[];
 }
 
-export function createWalker(opts?: Options): Walker {
-    return new Walker( opts ? opts.streams : []);
+export function createStream(opts?: Options): StreamPipe {
+    return new StreamPipe( opts ? opts.streams : []);
 }
 
-export default postcss.plugin('postcss-stream', function(walkers: Walker[]) {
-    walkers.concat().reduce((prev: Walker, current: Walker)=> {
+export default postcss.plugin('postcss-stream', function(walkers: StreamPipe[]) {
+    walkers.concat().reduce((prev: StreamPipe, current: StreamPipe)=> {
         prev.setNextWalker(current);
         return current;
     });

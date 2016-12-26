@@ -1,6 +1,6 @@
 import { Node } from "postcss";
 import { LinkedItemList } from "./linkedlist";
-import Walker from "./walker";
+import StreamPipe from "./walker";
 export interface StreamQuery {
     decl?: string | string[] | QDeclaration | QDeclaration[];
     rule?: string;
@@ -37,7 +37,7 @@ export interface QueryExpression {
     value: QDeclaration[] | QRule[];
     next?: QueryExpression;
     fn: StreamFunctor;
-    walker: Walker;
+    walker: StreamPipe;
     buffer: LinkedItemList<MNode>;
 }
 

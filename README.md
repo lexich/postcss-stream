@@ -1,3 +1,5 @@
+# Work in process
+
 # PostCSS Stream [![Build Status][ci-img]][ci]
 
 [PostCSS] plugin add support stream.
@@ -6,22 +8,27 @@
 [ci-img]:  https://travis-ci.org/lexich/postcss-stream.svg
 [ci]:      https://travis-ci.org/lexich/postcss-stream
 
-```css
-.foo {
-    /* Input example */
-}
-```
-
-```css
-.foo {
-  /* Output example */
-}
-```
-
-## Usage
-
+Add support to postcss stream api. 
 ```js
-postcss([ require('postcss-stream') ])
+const postcssStream = require('postcss-stream');
+
+const stream1 = postcssStream.createStream({
+   // select only nodes with type="decl" prop="color" value="red"
+   query: {
+        decl: {
+            prop: "color",
+            value: "red"
+        }
+   },
+   fn(decl) {
+     decl.value = "green";
+   }
+});
+
+postcssStream([
+  stream, ...
+]);
+
 ```
 
-See [PostCSS] docs for examples for your environment.
+Documentation in process.

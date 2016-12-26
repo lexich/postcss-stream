@@ -1,11 +1,11 @@
 import * as postcss from 'postcss';
-import Walker from "../src/walker";
+import StreamPipe from "../src/walker";
 import test, { ContextualTestContext } from 'ava';
 
-import plugin, {Options, createWalker} from '../src/';
+import plugin, {Options, createStream} from '../src/';
 
 function run(t: ContextualTestContext, input: string, output: string, opts: Options | Options[]) {
-    const walkers: Walker[] = Array.isArray(opts) ? opts.map(createWalker) : [createWalker(opts)];
+    const walkers: StreamPipe[] = Array.isArray(opts) ? opts.map(createStream) : [createStream(opts)];
     return postcss(plugin(walkers)).process(input)
         .then( result => {
             t.deepEqual(result.css, output);

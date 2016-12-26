@@ -1,8 +1,8 @@
-import {createWalker} from '../../../src';
+import {createStream} from '../../../src';
 import * as postcss from 'postcss';
 import {transformColorSafe} from './helper';
 
-export default createWalker({
+export default createStream({
     streams: [{
         query: {
             decl: {

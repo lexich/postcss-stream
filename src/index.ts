@@ -1,5 +1,5 @@
 import * as postcss from "postcss";
-import Walker from "./Walker";
+import Walker from "./walker";
 import { Stream } from "./interface";
 
 export interface Options {

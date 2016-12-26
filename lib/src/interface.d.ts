@@ -1,23 +1,25 @@
 import { Node } from "postcss";
-import CNode from "./node";
+import { LinkedItemList } from "./linkedlist";
+import Walker from "./walker";
 export interface StreamQuery {
     decl?: string | string[] | QDeclaration | QDeclaration[];
     rule?: string;
 }
 export interface StreamFunctor {
-    (child: CNode | Node): void;
+    (child: Node): void;
 }
 export interface Stream {
     query: StreamQuery;
     fn: StreamFunctor;
 }
+export declare type QDeclarationMatcher = RegExp | string | ((s: string) => boolean);
 export interface QDeclaration {
-    prop: string | RegExp;
-    value?: string | RegExp;
+    prop: QDeclarationMatcher;
+    value?: QDeclarationMatcher;
 }
 export interface Query {
-    decl: QueryExpression[];
-    rule: QueryExpression[];
+    decl: LinkedItemList<QueryExpression>;
+    rule: LinkedItemList<QueryExpression>;
 }
 export interface LinkedNodes<T> {
     data?: T;
@@ -27,9 +29,9 @@ export interface QueryExpression {
     type: string;
     value: QDeclaration[] | QRule[];
     next?: QueryExpression;
-    tailBuffer?: LinkedNodes<MNode>;
-    rootBuffer: LinkedNodes<MNode>;
     fn: StreamFunctor;
+    walker: Walker;
+    buffer: LinkedItemList<MNode>;
 }
 export declare type StreamDeclaration = string | string[] | QDeclaration | QDeclaration[];
 export declare type StringOrRegexp = string | RegExp;
@@ -37,6 +39,6 @@ export declare type StreamRule = StringOrRegexp | StringOrRegexp[];
 export declare type QRule = StreamRule;
 export interface MNode extends Node {
     __meta__?: {
-        expressions: QueryExpression[];
+        expression: QueryExpression;
     };
 }

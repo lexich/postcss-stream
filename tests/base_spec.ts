@@ -1,5 +1,5 @@
 import * as postcss from 'postcss';
-import Walker from "../src/Walker";
+import Walker from "../src/walker";
 import test, { ContextualTestContext } from 'ava';
 
 import plugin, {Options, createWalker} from '../src/';
@@ -121,7 +121,7 @@ test('simple change decl with 2 streams', t => {
 });
 
 test('overwriting changes decl with 2 streams', t => {
-    return run(t,
+    return run(t, 
         'a{ color: #000; z-index: 10; background: black; }',
         'a{ color: green; z-index: 10; background: black; }',
         [{

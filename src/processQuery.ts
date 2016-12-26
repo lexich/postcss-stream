@@ -1,7 +1,9 @@
 import {
     StreamDeclaration, QDeclaration, StreamRule, QRule, 
-    Stream, Query, LinkedNodes, QueryExpression, MNode
+    Stream, Query, QueryExpression, MNode
 } from "./interface";
+import Walker from "./walker";
+import { init, add } from "./linkedlist";
 
 export function processDecl(decl: StreamDeclaration) : QDeclaration[] {
     if (typeof decl === "string" || decl instanceof String) {
@@ -30,24 +32,39 @@ export function processRule(rule: StreamRule) : QRule[] {
     }
 }
 
-export default function processQuery(stream: Stream, streamQuery: Query) : Query {
+export function expressionByType(query: Query, type: string) {
+    return type === "decl" ? query.decl :
+           type === "rule" ? query.rule : null;
+}
+
+export default function processQuery(stream: Stream, streamQuery: Query, walker: Walker) : Query {
     const { query, fn } = stream;
-    const buffer: LinkedNodes<MNode> = { data: null, next: null };
-    const expr: QueryExpression = 
-        { type: null, value: null, next: null, fn: fn, 
-            tailBuffer: buffer, rootBuffer: buffer };
+    const expr: QueryExpression = { 
+        fn, walker,
+        type: null,
+        value: null,
+        next: null,
+        buffer: init<MNode>()
+    };
     if (query.decl) {
         expr.type = "decl";
         expr.value = processDecl(query.decl);
-        streamQuery.decl.push(expr);
+        add(expr, streamQuery.decl);
     }
     if (query.rule) {
         let ptr: QueryExpression = expr;
-        if (ptr.type) {
-            ptr = { type: "rule", value: null, next: null, fn: fn, rootBuffer: expr.rootBuffer };
+        if (expr.type) {
+            ptr = { 
+                fn, walker,
+                type: "rule", 
+                value: null, 
+                next: null, 
+                buffer: expr.buffer
+            };
             expr.next = ptr;
         } else {
-            ptr.type = "rule";
+            expr.type = "rule";
+            add(expr, streamQuery.rule);
         }
         ptr.value = processRule(query.rule);
     }

@@ -1,4 +1,6 @@
 import { Node } from "postcss";
+import { LinkedItemList } from "./linkedlist";
+import Walker from "./walker";
 export interface StreamQuery {
     decl?: string | string[] | QDeclaration | QDeclaration[];
     rule?: string;
@@ -8,20 +10,21 @@ export  interface StreamFunctor {
     (child: Node): void;
 }
 
-
 export  interface Stream {
     query: StreamQuery;
     fn: StreamFunctor;
 }
 
-export  interface QDeclaration {
-    prop: string | RegExp;
-    value?: string | RegExp;
+export type QDeclarationMatcher = RegExp | string | ((s:string) => boolean);
+
+export interface QDeclaration {
+    prop: QDeclarationMatcher;
+    value?: QDeclarationMatcher;
 }
 
 export interface Query {
-    decl: QueryExpression[];
-    rule: QueryExpression[];
+    decl: LinkedItemList<QueryExpression>;
+    rule: LinkedItemList<QueryExpression>;
 }
 
 export interface LinkedNodes<T> {
@@ -33,9 +36,9 @@ export interface QueryExpression {
     type: string;
     value: QDeclaration[] | QRule[];
     next?: QueryExpression;
-    tailBuffer?: LinkedNodes<MNode>;
-    rootBuffer: LinkedNodes<MNode>;
     fn: StreamFunctor;
+    walker: Walker;
+    buffer: LinkedItemList<MNode>;
 }
 
 export type StreamDeclaration = string | string[] | QDeclaration | QDeclaration[];
@@ -46,7 +49,6 @@ export type QRule = StreamRule;
 
 export interface MNode extends Node {
     __meta__?: {
-        expressions?: QueryExpression[];
-        patch?: boolean;
+        expression: QueryExpression
     };
 }

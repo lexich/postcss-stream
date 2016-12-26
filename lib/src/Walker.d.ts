@@ -1,12 +1,15 @@
-import { Container, Result, Node } from "postcss";
-import { Stream, MNode } from "./interface";
+import { Container, Result } from "postcss";
+import { Query, Stream, MNode } from "./interface";
 export default class Walker {
     private streams;
-    private query;
+    query: Query;
     private nextWalker?;
-    private updateNodeList;
-    constructor(streams: Stream[], nextWalker?: Walker);
-    updateModel: (node: Node) => void;
+    private prevWalker?;
+    constructor(streams: Stream[], prevWalker?: Walker);
+    getPrevWalker(): Walker;
+    setPrevWalker(prevWalker?: Walker): void;
+    setNextWalker(nextWalker: Walker): void;
+    getNextWalker(): Walker;
     run(css: Container, result: Result): void;
     execute(): void;
     walk: (child: MNode) => void;

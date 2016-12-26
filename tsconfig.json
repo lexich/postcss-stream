@@ -5,6 +5,7 @@
     "inlineSourceMap": true,
     "noImplicitAny": true,
     "removeComments": true,
+    "outDir": "lib",
     "preserveConstEnums": true
   },
   "exclude": [

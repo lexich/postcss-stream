@@ -1,4 +1,4 @@
-# Work in process
+# Work in progress
 
 # PostCSS Stream [![Build Status][ci-img]][ci]
 

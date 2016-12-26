@@ -1,4 +1,4 @@
-import { Node } from "postcss";
+import { Node, Declaration } from "postcss";
 import { LinkedItemList } from "./linkedlist";
 import StreamPipe from "./walker";
 export interface StreamQuery {
@@ -7,7 +7,7 @@ export interface StreamQuery {
 }
 
 export  interface StreamFunctor {
-    (child: Node): void;
+    (child: Node | Declaration): void;
 }
 
 export  interface Stream {

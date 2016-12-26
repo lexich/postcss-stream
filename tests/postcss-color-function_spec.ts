@@ -3,12 +3,12 @@ import {readFileSync} from 'fs';
 import {join} from 'path';
 import test, { ContextualTestContext } from 'ava';
 const colorFunction = require("postcss-color-function");
-import walker from "./fixtures/postcss-color-function";
+import stream from "./fixtures/postcss-color-function";
 import plugin from "../src";
 
 function run(t: ContextualTestContext, code: string) {
     return Promise.all([
-        postcss().use(plugin([walker])).process(code),
+        postcss().use(plugin([stream])).process(code),
         postcss().use(colorFunction()).process(code)
     ]).then(result => {
         t.deepEqual(result[0].css, result[1].css);

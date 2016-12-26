@@ -26,8 +26,10 @@
     "eslint": "^3.1.1",
     "eslint-config-postcss": "^2.0.2",
     "postcss-color-function": "^2.0.1",
+    "postcss-grid": "^2.0.0",
     "postcss-message-helpers": "^2.0.0",
     "postcss-value-parser": "^3.3.0",
+    "reduce-function-call": "^1.0.2",
     "ts-node": "^1.7.2",
     "tslint": "^4.1.1",
     "typescript": "^2.1.4"

@@ -17,6 +17,7 @@ export interface QDeclaration {
 }
 
 export interface QueryDeclarationDefinition extends QDeclaration {
+    array?: QDeclaration[];
     enter: StreamFunctor<Node | Declaration, void>;
 }
 

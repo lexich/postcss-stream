@@ -54,15 +54,16 @@ test('simple change decl with array decl', t => {
         }]);
 });
 
-// FIX api
-test.skip('simple change decl with all pattern array decl', t => {
+test('simple change decl with all pattern array decl', t => {
     return run(t,
         'a{ color: #000; z-index: 10; background: black; }',
         'a{ color: red; z-index: 10; background: black; }',
         [{
             decl: {
-                //{ prop: 'color', value: '#000' }, 
-                //{ prop: 'z-index', value: '11' },
+                array: [
+                    { prop: 'color', value: '#000' }, 
+                    { prop: 'z-index', value: '11' }
+                ],
                 enter(child: postcss.Declaration) {
                     child.value = 'red';
                 }

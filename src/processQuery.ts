@@ -45,6 +45,9 @@ export function processDecl(decl: QueryDeclarationDefinition | QueryDeclarationD
                 result.push({ value: v as QueryProperty });
             }
         }
+        if (d.array && d.array.length > 0) {
+            result = result.concat(d.array);
+        }
     }
     return result;
 }

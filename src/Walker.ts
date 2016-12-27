@@ -4,6 +4,7 @@ import processQuery, { expressionByType } from "./processQuery";
 import match from "./match";
 import {init, add, NONE, LinkedItemList, isEmpty, shift} from "./linkedlist";
 import overwrite from "./overwrite";
+import { setMeta } from "./meta";
 
 export default class Walker {
     public query: Query = { 
@@ -75,9 +76,7 @@ export default class Walker {
             query = iter.data as QueryExpression;
             if (match(child, query)) {
                 add(child, query.buffer);
-                if (!child.__meta__) {
-                    child.__meta__ = { expression: query };
-                }
+                setMeta(child, "expression", query);
                 // first rule catch element
                 return;
             }

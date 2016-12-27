@@ -49,6 +49,7 @@ export default function(options?: Options) {
             },
             fn(decl: Declaration) {
                 try {
+                    
                     helper.callGridColumn(decl.value, function(span: number, columns: number) {
                         decl.parent.append({
                             prop: 'float', value: 'left'
@@ -70,9 +71,11 @@ export default function(options?: Options) {
                                 value: helper.gutterWidth(columns) + '%'
                             }).source = decl.source;
 					    }
+                        debugger;
 					    decl.remove();
                     });
                 } catch(e) {
+                    console.log(e.stack);
                     throw decl.error(e.message, { plugin: 'postcss-grid' });
                 }
             }

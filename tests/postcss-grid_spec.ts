@@ -26,7 +26,7 @@ function run(t: ContextualTestContext, code: string, opts?: Options) {
     '.element{grid-pull: 1/12;}',
     '.element{width: grid-width(1/12);}',
     '.element{margin-left: grid-gutter(12);}'
-].forEach((code)=> {
+].forEach((code, i)=> {
     test(code, t => run(t, code));
 });
 

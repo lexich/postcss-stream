@@ -49,6 +49,7 @@ export type QRule = StreamRule;
 
 export interface MNode extends Node {
     __meta__?: {
-        expression: QueryExpression
+        proxy?: MNode,
+        expression?: QueryExpression
     };
 }

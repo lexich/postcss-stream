@@ -2,19 +2,18 @@ import { Declaration, Rule, Node } from "postcss";
 import { QueryExpression, QDeclarationMatcher, QDeclaration, QRule, MNode } from "./interface";
 import { expressionByType } from "./processQuery";
 import { add, isEmpty } from "./linkedlist";
+import { setMeta, getMeta, clearMeta } from "./meta";
 
 export function sendNodeNext(node: MNode): void {
     let searcher = true;
     while (searcher) {
         searcher = false;
-        if (!node.__meta__) { 
-            return;
-        }
-        const {expression} = node.__meta__;
+        const expression = getMeta<QueryExpression>(node, "expression");
+        if (!expression) { return; }
         let {next} = expression;
         while (next) {
             if (match(node, next)) {
-                node.__meta__.expression = next;
+                setMeta(node, "expression", next);
                 return; // process on next rule
             }
             next = next.next;
@@ -25,18 +24,19 @@ export function sendNodeNext(node: MNode): void {
             searcherWalker = false;
             if (!nextWalker) {
                 // clean meta information
-                return (node.__meta__ = (void 0));
+                return clearMeta(node);
             }
             let list = expressionByType(nextWalker.query, expression.type);
             if (isEmpty(list)) {
                 // clean meta information
-                (node.__meta__ = (void 0));
+                clearMeta(node);
                 searcherWalker = true;
                 continue; // nextWalker
             } else {
-                node.__meta__.expression = list.next.data as QueryExpression;
-                if (match(node, node.__meta__.expression)) {
-                    add(node, node.__meta__.expression.buffer);
+                ;
+                const expression = setMeta(node, "expression", list.next.data as QueryExpression);
+                if (match(node, expression)) {
+                    add(node, expression.buffer);
                     return; // process on next rule
                 } else {         
                     searcher = true; // goto start sendNodeNext and find expression

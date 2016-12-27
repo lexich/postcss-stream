@@ -85,7 +85,7 @@ function processStream(stream: Stream, walker: StreamPipe): QueryExpression[] {
             fn: null,
             walker,
             type: "rule",
-            value: null,
+            value: processRule(rule as QueryRuleDefinition),
             next: null,
             buffer: null
         };
@@ -98,13 +98,9 @@ function processStream(stream: Stream, walker: StreamPipe): QueryExpression[] {
                     decl.next = ruleExp;
                     return decl;
                 });
-            } else {
-                return [ruleExp];
             }            
-        } else {
-            ruleExp.value = processRule(rule as QueryRuleDefinition);
-            return [ruleExp];
         }
+        return [ruleExp];
     } else {
         return [];
     }

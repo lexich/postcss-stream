@@ -96,6 +96,9 @@ export function matchDecl(decl: Declaration, expr: QueryExpression): boolean {
 }
 
 export function matchRule(rule: Rule, expr: QueryExpression): boolean {
+    if (!expr) { return false; }
+    const { value } = expr;
+    if (!value) { return false; }
     for (let item of expr.value as QRule[]) {
         // TODO: fix according postcss
         if (Array.isArray(item)) {

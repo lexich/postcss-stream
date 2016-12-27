@@ -71,7 +71,7 @@ test.skip('simple change decl with all pattern array decl', t => {
 });
 
 // FIX api
-test.skip('simple change decl with prop', t => {
+test('simple change decl with prop', t => {
     return run(t,
         '.test{ color: #000; }.test1{ color: #000; }',
         '.test{ color: red; }.test1{ color: #000; }',

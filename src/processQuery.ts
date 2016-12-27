@@ -73,14 +73,21 @@ function processStream(stream: Stream, walker: StreamPipe): QueryExpression[] {
     if ((stream as QueryDeclaration).decl) {
         const {decl} = (stream as QueryDeclaration);
         const declArray = Array.isArray(decl) ? decl : [decl];
-        return declArray.map((d)=> ({ 
-            fn: d.enter, 
-            walker,
-            type: "decl",
-            value: processDecl(d),
-            next: null,
-            buffer: init<MNode>()
-        }));
+        return declArray.map((d)=> { 
+            const expr: QueryExpression = {
+                fn: d.enter, 
+                walker,
+                type: "decl",
+                value: processDecl(d),
+                next: null,
+                buffer: init<MNode>()
+            };
+            if (!expr.value.length) {
+                const value: QDeclaration = { prop: "*" };
+                expr.value = [value];
+            }
+            return expr;
+        });
         
     } else if ((stream as QueryRule).rule) {
         const {rule} = (stream as QueryRule);

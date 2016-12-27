@@ -40,6 +40,19 @@ test('simple change decl with all pattern [*]', t => {
         }]);
 });
 
+test('simple change decl without anything', t => {
+    return run(t,
+        'a{ color: #000; background: black; }',
+        'a{ color: red; background: red; }',
+        [{
+            decl: {
+                enter(child: postcss.Declaration) {
+                    child.value = 'red';
+                }
+            }
+        }]);
+});
+
 test('simple change decl with array decl', t => {
     return run(t,
         'a{ color: #000; z-index: 10; background: black; }',

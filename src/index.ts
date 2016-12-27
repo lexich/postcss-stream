@@ -2,12 +2,9 @@ import * as postcss from "postcss";
 import StreamPipe from "./walker";
 import { Stream } from "./interface";
 
-export interface Options {
-    streams: Stream[];
-}
-
-export function createStream(opts?: Options): StreamPipe {
-    return new StreamPipe( opts ? opts.streams : []);
+export function createStream(opts: Stream | Stream[]): StreamPipe {
+    const rules: Stream[] = !opts ? [] : Array.isArray(opts) ? opts : [opts];
+    return new StreamPipe(rules);
 }
 
 export default postcss.plugin('postcss-stream', function(walkers: StreamPipe[]) {

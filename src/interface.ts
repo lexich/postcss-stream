@@ -1,26 +1,39 @@
 import { Node, Declaration } from "postcss";
 import { LinkedItemList } from "./linkedlist";
 import StreamPipe from "./walker";
-export interface StreamQuery {
-    decl?: string | string[] | QDeclaration | QDeclaration[];
-    rule?: string;
+
+
+export type StringOrRegexp = string | RegExp;
+export type StringOrRegexpOrFunction = StringOrRegexp | StreamFunctor<string, boolean>;
+export interface StreamFunctor<Input, T> {
+    (child: Input): T;
 }
 
-export  interface StreamFunctor {
-    (child: Node | Declaration): void;
-}
-
-export  interface Stream {
-    query: StreamQuery;
-    fn: StreamFunctor;
-}
-
-export type QDeclarationMatcher = RegExp | string | ((s:string) => boolean);
+export type QueryProperty = StringOrRegexpOrFunction | StringOrRegexpOrFunction[];
 
 export interface QDeclaration {
-    prop: QDeclarationMatcher;
-    value?: QDeclarationMatcher;
+    prop?: QueryProperty;
+    value?: QueryProperty;
 }
+
+export interface QueryDeclarationDefinition extends QDeclaration {
+    enter: StreamFunctor<Node | Declaration, void>;
+}
+
+export interface QueryDeclaration {
+    decl: QueryDeclarationDefinition | QueryDeclarationDefinition[];
+}
+
+export interface QueryRuleDefinition {
+    selector: QueryProperty;
+};
+
+export interface QueryRule {
+    rule: QueryDeclaration | QueryRuleDefinition;
+}
+
+export type Stream = QueryRule | QueryDeclaration;
+
 
 export interface Query {
     decl: LinkedItemList<QueryExpression>;
@@ -36,16 +49,14 @@ export interface QueryExpression {
     type: string;
     value: QDeclaration[] | QRule[];
     next?: QueryExpression;
-    fn: StreamFunctor;
+    fn: StreamFunctor<Node | Declaration, void>;
     walker: StreamPipe;
     buffer: LinkedItemList<MNode>;
 }
 
 export type StreamDeclaration = string | string[] | QDeclaration | QDeclaration[];
 
-export type StringOrRegexp = string | RegExp;
-export type StreamRule = StringOrRegexp | StringOrRegexp[];
-export type QRule = StreamRule;
+export type QRule = StringOrRegexpOrFunction | StringOrRegexpOrFunction[];
 
 export interface MNode extends Node {
     __meta__?: {

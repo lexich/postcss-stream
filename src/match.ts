@@ -1,5 +1,5 @@
 import { Declaration, Rule, Node } from "postcss";
-import { QueryExpression, QDeclarationMatcher, QDeclaration, QRule, MNode } from "./interface";
+import { QueryExpression, StreamFunctor, QueryProperty, QDeclaration, QRule, MNode,  } from "./interface";
 import { expressionByType } from "./processQuery";
 import { add, isEmpty } from "./linkedlist";
 import { setMeta, getMeta, clearMeta } from "./meta";
@@ -56,9 +56,9 @@ export default function match(node: Node, expr: QueryExpression) {
     }
 }
 
-export function cmp(matcher: QDeclarationMatcher, prop: string): boolean {
+export function cmp(matcher: QueryProperty, prop: string): boolean {
     if (matcher instanceof Function) {
-        return matcher(prop);
+        return (matcher as StreamFunctor<string, boolean>)(prop);
     } else if (matcher instanceof RegExp) {
         return matcher.test(prop);                    
     } else {

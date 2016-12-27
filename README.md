@@ -13,16 +13,14 @@ Add support to postcss stream api.
 const postcssStream = require('postcss-stream');
 
 const stream1 = postcssStream.createStream({
-   // select only nodes with type="decl" prop="color" value="red"
-   query: {
-        decl: {
-            prop: "color",
-            value: "red"
-        }
-   },
-   fn(decl) {
-     decl.value = "green";
-   }
+  // select only nodes with type="decl" prop="color" value="red"
+  decl: {
+      prop: "color",
+      value: "red",
+      enter(decl) {
+        decl.value = "green";
+      }
+  }
 });
 
 postcssStream([

@@ -1,29 +1,58 @@
 import {
-    StreamDeclaration, QDeclaration, StreamRule, QRule, 
-    Stream, Query, QueryExpression, MNode
+    QDeclaration, QRule, 
+    Stream, Query, QueryExpression, MNode,
+    QueryDeclaration, QueryDeclarationDefinition,
+    QueryRule, QueryRuleDefinition,
+    StringOrRegexpOrFunction,
+    QueryProperty
 } from "./interface";
 import StreamPipe from "./walker";
 import { init, add } from "./linkedlist";
 
-export function processDecl(decl: StreamDeclaration) : QDeclaration[] {
-    if (typeof decl === "string" || decl instanceof String) {
-        return [{ prop: decl as string }];
-    } else if (Array.isArray(decl)) {
-        let result : QDeclaration[] = [];
-        for(let item of decl) {
-            result = result.concat(processDecl(item));
-        }
-        return result;
-    } else if (typeof decl === "object") {
-        return [decl];
+function toArray<T>(item: T | T[]): T[] {
+    if (!item) { 
+        return []; 
     } else {
-        return [];
+        return Array.isArray(item) ? item : [item];
     }
 }
 
-export function processRule(rule: StreamRule) : QRule[] {
-    if (typeof rule === "string" || rule instanceof String || rule instanceof RegExp) {
-        return [rule];
+export function processDecl(decl: QueryDeclarationDefinition | QueryDeclarationDefinition[]) : QDeclaration[] {
+    let result : QDeclaration[] = [];
+    if (Array.isArray(decl)) {
+        for(let item of decl) {
+            result = result.concat(processDecl(item));
+        }
+    } else {
+        const d = (decl as QueryDeclarationDefinition);
+        const props = toArray(d.prop);
+        const values = toArray(d.value);
+        if (props.length && values.length) {
+            for (let v of values) {
+                for (let p of props) {
+                    result.push({ 
+                        prop: p as QueryProperty, 
+                        value: v as QueryProperty 
+                    });
+                }
+            }
+        } else if (props.length) {
+            for (let p of props) {
+                result.push({ prop: p as QueryProperty });
+            }
+        } else {
+            for (let v of values) {
+                result.push({ value: v as QueryProperty });
+            }
+        }
+    }
+    return result;
+}
+
+export function processRule(rule: QueryRuleDefinition) : QRule[] {
+    const {selector} = rule;
+    if (typeof selector === "string" || selector instanceof String || selector instanceof RegExp || selector instanceof Function) {
+        return [selector as StringOrRegexpOrFunction];
     } else if(Array.isArray(rule))  {
         return rule.reduce(
             (memo, r) => memo.concat(processRule(r)), []);
@@ -37,36 +66,56 @@ export function expressionByType(query: Query, type: string) {
            type === "rule" ? query.rule : null;
 }
 
-export default function processQuery(stream: Stream, streamQuery: Query, walker: StreamPipe) : Query {
-    const { query, fn } = stream;
-    const expr: QueryExpression = { 
-        fn, walker,
-        type: null,
-        value: null,
-        next: null,
-        buffer: init<MNode>()
-    };
-    if (query.decl) {
-        expr.type = "decl";
-        expr.value = processDecl(query.decl);
-        add(expr, streamQuery.decl);
-    }
-    if (query.rule) {
-        let ptr: QueryExpression = expr;
-        if (expr.type) {
-            ptr = { 
-                fn, walker,
-                type: "rule", 
-                value: null, 
-                next: null, 
-                buffer: expr.buffer
-            };
-            expr.next = ptr;
+function processStream(stream: Stream, walker: StreamPipe): QueryExpression[] {
+    if ((stream as QueryDeclaration).decl) {
+        const {decl} = (stream as QueryDeclaration);
+        const declArray = Array.isArray(decl) ? decl : [decl];
+        return declArray.map((d)=> ({ 
+            fn: d.enter, 
+            walker,
+            type: "decl",
+            value: processDecl(d),
+            next: null,
+            buffer: init<MNode>()
+        }));
+        
+    } else if ((stream as QueryRule).rule) {
+        const {rule} = (stream as QueryRule);
+        const ruleExp: QueryExpression = {
+            fn: null,
+            walker,
+            type: "rule",
+            value: null,
+            next: null,
+            buffer: null
+        };
+        if ((rule as QueryDeclaration).decl) {            
+            const declExpr = processStream(rule as Stream, walker);
+            if (declExpr.length) {
+                ruleExp.fn = declExpr[0].fn;
+                ruleExp.buffer = declExpr[0].buffer;
+                return declExpr.map((decl)=> {
+                    decl.next = ruleExp;
+                    return decl;
+                });
+            } else {
+                return [ruleExp];
+            }            
         } else {
-            expr.type = "rule";
-            add(expr, streamQuery.rule);
+            ruleExp.value = processRule(rule as QueryRuleDefinition);
+            return [ruleExp];
         }
-        ptr.value = processRule(query.rule);
+    } else {
+        return [];
     }
+}
+
+export default function processQuery(stream: Stream, streamQuery: Query, walker: StreamPipe) : Query {
+    processStream(stream, walker).forEach((expr)=> {
+        const list = (streamQuery as any)[expr.type];
+        if (list) {
+            add<QueryExpression>(expr, list);
+        }
+    });
     return streamQuery;
 }

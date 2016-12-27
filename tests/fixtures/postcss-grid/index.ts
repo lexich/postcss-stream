@@ -12,42 +12,34 @@ export default function(options?: Options) {
     };
     const helper = getHelper(opts);
     const isLast = /\s*!last\s*$/;
-    return createStream({
-        streams: [{
-            query: {
-                decl: {
-                    prop: "*",
-                    value(s?: string) {
-                        return !!s && s.indexOf("grid-width(") >= 0;
-                    }
-                }
-            },
-            fn(decl: Declaration) {
+    return createStream([{
+        decl: {
+            prop: "*",
+            value(s?: string) {
+                return !!s && s.indexOf("grid-width(") >= 0;
+            },    
+            enter(decl: Declaration) {
                 try {
                     decl.value = helper.callGridWidth(decl.value);
                 } catch(e) {
                     throw decl.error(e.message, { plugin: 'postcss-grid' });
                 }
             }
-        }, {
-            query: {
-                decl: {
-                    prop: "*",
-                    value(s?: string) {
-                        return !!s && s.indexOf("grid-gutter(") >= 0;
-                    }
-                }
+        }
+     }, {
+        decl: {
+            prop: "*",
+            value(s?: string) {
+                return !!s && s.indexOf("grid-gutter(") >= 0;
             },
-            fn(decl: Declaration) {
+            enter(decl: Declaration) {
                 decl.value = helper.callGridGutter(decl.value);
             }
-        }, {
-            query: {
-                decl: {
-                    prop: "grid-column"
-                }
-            },
-            fn(decl: Declaration) {
+        }
+    }, {
+        decl: {
+            prop: "grid-column",
+            enter(decl: Declaration) {
                 try {
                     
                     helper.callGridColumn(decl.value, function(span: number, columns: number) {
@@ -66,24 +58,23 @@ export default function(options?: Options) {
                                     value: 'inline'
                                 }).source = decl.source;
                             }
-						    decl.parent.append({
+                            decl.parent.append({
                                 prop: 'margin-right', 
                                 value: helper.gutterWidth(columns) + '%'
                             }).source = decl.source;
-					    }
-                        debugger;
-					    decl.remove();
+                        }
+                        decl.remove();
                     });
                 } catch(e) {
                     console.log(e.stack);
                     throw decl.error(e.message, { plugin: 'postcss-grid' });
                 }
             }
-        }, {
-            query: {
-                decl: ['grid-push', 'grid-pull']
-            },
-            fn(decl: Declaration) {
+        }
+    }, {
+        decl: {
+            prop: ['grid-push', 'grid-pull'],
+            enter(decl: Declaration) {
                 try {
                     helper.callGridColumn(decl.value, function(span: number, columns: number) {
                         const width = span * helper.gridWidth(1, columns) + span * helper.gutterWidth(columns);
@@ -97,7 +88,7 @@ export default function(options?: Options) {
                     throw decl.error(e.message, { plugin: 'postcss-grid' });
                 }
             }
-        }]
-    });
+        }
+    }]);
 }
 

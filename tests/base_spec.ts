@@ -18,7 +18,7 @@ test('simple change decl with [color]', t => {
         'a{ color: #000; }',
         'a{ color: red; }', [{
             decl: {
-              prop: 'color',
+                prop: 'color',
                 enter(child: postcss.Declaration) {
                     child.value = 'red';
                 }

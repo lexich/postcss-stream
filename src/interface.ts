@@ -61,7 +61,7 @@ export type QRule = StringOrRegexpOrFunction | StringOrRegexpOrFunction[];
 
 export interface MNode extends Node {
     __meta__?: {
-        proxy?: MNode,
+        proxy?: MNode,    
         expression?: QueryExpression
     };
 }

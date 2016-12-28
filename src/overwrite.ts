@@ -19,17 +19,23 @@ export default function overwrite(child: MNode): MNode {
             get(target: MNode, prop: string) {
                 if (!target) {
                     return undefined;
-                }
-                if (prop === "$$self") {
-                    return target;
-                }
+                }                
                 const getter = (target as any)[prop];
                 if (prop === "parent" && getter) {
-                    return overwrite(getter);
-                } else if (prop === "index" && getter) {
-                    return function(proxy: MNode) {
-                        return (target as any).index((proxy as any).$$self as MNode);
-                    };
+                    if (getter instanceof Function) {
+                        return getter;
+                    } else {
+                        return overwrite(getter);
+                    }
+                } else if (prop === "$$self") {
+                    return target;
+                } else if (prop === "index") {
+                    const key = `__${prop}`;
+                    return getMeta<any>(target, key) || 
+                           setMeta<any>(target, key, function(proxy: MNode) {
+                               const node: MNode = proxy ? (proxy as any).$$self : proxy;
+                              return (target as any).index(node);
+                           });
                 } else {
                     return getter;
                 }

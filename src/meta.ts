@@ -1,13 +1,10 @@
 import { MNode } from "./interface";
 
 export function setMeta<T>(node: MNode, prop: string, val: T): T {
-    if (prop !== "proxy" && prop !== "expression") {
-        return null;
-    }    
     if (!node.__meta__) {
         node.__meta__ = { [prop]: val };
     } else {
-        node.__meta__[prop] = val as any;
+        (node.__meta__ as any)[prop] = val as any;
     }
     return val;
 }

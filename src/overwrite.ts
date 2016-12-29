@@ -1,8 +1,11 @@
 import { MNode } from "./interface";
-import { sendNodeNext } from "./match";
 import { getMeta, setMeta } from "./meta";
+import StreamPipe from "./streampipe";
 
-export default function overwrite(child: MNode): MNode {
+
+
+export default function overwrite<T>(child: MNode, pipe: StreamPipe): T | MNode {
+    setMeta(child, "pipe", pipe);
     const proxy = getMeta<MNode>(child, "proxy");
     if (proxy) {
         return proxy;
@@ -11,7 +14,8 @@ export default function overwrite(child: MNode): MNode {
             set(target: MNode, prop: string, value: any, receiver: any) {
                 if (target) {
                     (target as any)[prop] = value;
-                    sendNodeNext(target);
+                    const pipe = getMeta<StreamPipe>(child, "pipe");
+                    pipe.skipNode(child);                    
                     return true;
                }
                return false;
@@ -25,7 +29,7 @@ export default function overwrite(child: MNode): MNode {
                     if (getter instanceof Function) {
                         return getter;
                     } else {
-                        return overwrite(getter);
+                        return overwrite(getter, getMeta<StreamPipe>(child, "pipe"));
                     }
                 } else if (prop === "$$self") {
                     return target;

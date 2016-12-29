@@ -1,5 +1,5 @@
 import * as postcss from 'postcss';
-import StreamPipe from "../src/walker";
+import StreamPipe from "../src/streampipe";
 import test, { ContextualTestContext } from 'ava';
 import { Stream } from "../src/interface";
 import plugin, {createStream} from '../src/';

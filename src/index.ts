@@ -1,5 +1,5 @@
 import * as postcss from "postcss";
-import StreamPipe from "./walker";
+import StreamPipe from "./streampipe";
 import { Stream } from "./interface";
 
 export function createStream(opts: Stream | Stream[]): StreamPipe {

@@ -1,0 +1,14 @@
+:root {
+    --some-color: red;
+    --background-color: black;
+}
+
+.test {
+    --background-color: green;
+    color: var(--some-color);
+    background: var(--background-color);
+}
+
+.test-2 {
+    background: var(--background-color);
+}

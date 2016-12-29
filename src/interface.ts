@@ -1,6 +1,6 @@
-import { Node, Declaration } from "postcss";
+import { Node, Declaration, Rule } from "postcss";
 import { LinkedItemList } from "./linkedlist";
-import StreamPipe from "./walker";
+import StreamPipe from "./streampipe";
 
 
 export type StringOrRegexp = string | RegExp;
@@ -16,21 +16,26 @@ export interface QDeclaration {
     value?: QueryProperty;
 }
 
-export interface QueryDeclarationDefinition extends QDeclaration {
+export interface DefinitionBase<TNode> {
+    reference?: any;
+    enter?: StreamFunctor<TNode, void>;
+    leave?: StreamFunctor<TNode, void>;
+}
+
+export interface QueryDeclarationDefinition extends QDeclaration, DefinitionBase<Declaration | MNode> {
     array?: QDeclaration[];
-    enter: StreamFunctor<Node | Declaration, void>;
 }
 
 export interface QueryDeclaration {
     decl: QueryDeclarationDefinition | QueryDeclarationDefinition[];
 }
 
-export interface QueryRuleDefinition {
+export interface QueryRuleDefinition extends DefinitionBase<Rule | MNode> {
     selector: QueryProperty;
 };
 
 export interface QueryRule {
-    rule: QueryDeclaration | QueryRuleDefinition;
+    rule: QueryRuleDefinition & QueryDeclaration;
 }
 
 export type Stream = QueryRule | QueryDeclaration;
@@ -50,9 +55,9 @@ export interface QueryExpression {
     type: string;
     value: QDeclaration[] | QRule[];
     next?: QueryExpression;
-    fn: StreamFunctor<Node | Declaration, void>;
+    enter?: StreamFunctor<MNode, void>;
+    leave?: StreamFunctor<MNode, void>;
     walker: StreamPipe;
-    buffer: LinkedItemList<MNode>;
 }
 
 export type StreamDeclaration = string | string[] | QDeclaration | QDeclaration[];
@@ -61,7 +66,10 @@ export type QRule = StringOrRegexpOrFunction | StringOrRegexpOrFunction[];
 
 export interface MNode extends Node {
     __meta__?: {
-        proxy?: MNode,    
+        proxy?: MNode,
+        pipe: StreamPipe,
+        skip: boolean,
         expression?: QueryExpression
+        stage: "enter" | "leave" | null
     };
 }

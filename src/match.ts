@@ -1,52 +1,6 @@
 import { Declaration, Rule, Node } from "postcss";
-import { QueryExpression, StreamFunctor, QueryProperty, QDeclaration, QRule, MNode,  } from "./interface";
-import { expressionByType } from "./processQuery";
-import { add, isEmpty } from "./linkedlist";
-import { setMeta, getMeta, clearMeta } from "./meta";
+import { QueryExpression, StreamFunctor, QueryProperty, QDeclaration, QRule } from "./interface";
 
-export function sendNodeNext(node: MNode): void {
-    let searcher = true;
-    while (searcher) {
-        searcher = false;
-        const expression = getMeta<QueryExpression>(node, "expression");
-        if (!expression) { return; }
-        let {next} = expression;
-        while (next) {
-            if (match(node, next)) {
-                setMeta(node, "expression", next);
-                return; // process on next rule
-            }
-            next = next.next;
-        }    
-        let nextWalker = expression.walker.getNextWalker();
-        let searcherWalker = true;
-        while (searcherWalker) {
-            searcherWalker = false;
-            if (!nextWalker) {
-                // clean meta information
-                return clearMeta(node);
-            }
-            let list = expressionByType(nextWalker.query, expression.type);
-            if (isEmpty(list)) {
-                // clean meta information
-                clearMeta(node);
-                searcherWalker = true;
-                continue; // nextWalker
-            } else {
-                ;
-                const expression = setMeta(node, "expression", list.next.data as QueryExpression);
-                if (match(node, expression)) {
-                    add(node, expression.buffer);
-                    return; // process on next rule
-                } else {         
-                    searcher = true; // goto start sendNodeNext and find expression
-                }
-            }
-        }
-        
-    }
-    
-}
 
 export default function match(node: Node, expr: QueryExpression) {
     if (expr.type === "decl") {

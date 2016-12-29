@@ -1,13 +1,11 @@
 import {
     QDeclaration, QRule, 
-    Stream, Query, QueryExpression, MNode,
+    Stream, QueryExpression,
     QueryDeclaration, QueryDeclarationDefinition,
     QueryRule, QueryRuleDefinition,
     StringOrRegexpOrFunction,
     QueryProperty
 } from "./interface";
-import StreamPipe from "./walker";
-import { init, add } from "./linkedlist";
 
 function toArray<T>(item: T | T[]): T[] {
     if (!item) { 
@@ -17,7 +15,7 @@ function toArray<T>(item: T | T[]): T[] {
     }
 }
 
-export function processDecl(decl: QueryDeclarationDefinition | QueryDeclarationDefinition[]) : QDeclaration[] {
+function processDecl(decl: QueryDeclarationDefinition | QueryDeclarationDefinition[]) : QDeclaration[] {
     let result : QDeclaration[] = [];
     if (Array.isArray(decl)) {
         for(let item of decl) {
@@ -52,7 +50,7 @@ export function processDecl(decl: QueryDeclarationDefinition | QueryDeclarationD
     return result;
 }
 
-export function processRule(rule: QueryRuleDefinition) : QRule[] {
+function processRule(rule: QueryRuleDefinition) : QRule[] {
     const {selector} = rule;
     if (typeof selector === "string" || selector instanceof String || selector instanceof RegExp || selector instanceof Function) {
         return [selector as StringOrRegexpOrFunction];
@@ -64,64 +62,53 @@ export function processRule(rule: QueryRuleDefinition) : QRule[] {
     }
 }
 
-export function expressionByType(query: Query, type: string) {
-    return type === "decl" ? query.decl :
-           type === "rule" ? query.rule : null;
-}
-
-function processStream(stream: Stream, walker: StreamPipe): QueryExpression[] {
-    if ((stream as QueryDeclaration).decl) {
-        const {decl} = (stream as QueryDeclaration);
-        const declArray = Array.isArray(decl) ? decl : [decl];
-        return declArray.map((d)=> { 
-            const expr: QueryExpression = {
-                fn: d.enter, 
-                walker,
-                type: "decl",
-                value: processDecl(d),
-                next: null,
-                buffer: init<MNode>()
-            };
-            if (!expr.value.length) {
-                const value: QDeclaration = { prop: "*" };
-                expr.value = [value];
-            }
-            return expr;
-        });
-        
-    } else if ((stream as QueryRule).rule) {
-        const {rule} = (stream as QueryRule);
-        const ruleExp: QueryExpression = {
-            fn: null,
-            walker,
-            type: "rule",
-            value: processRule(rule as QueryRuleDefinition),
+function processStreamDecl(
+    fn: (expr: QueryExpression) => void, 
+    decl: QueryDeclarationDefinition | QueryDeclarationDefinition[]
+) {
+    const declArray = Array.isArray(decl) ? decl : [decl];
+    declArray.forEach((d)=> { 
+        const expr: QueryExpression = {
+            enter: d.enter, 
+            leave: d.leave,
+            walker: null,
+            type: "decl",
+            value: processDecl(d),
             next: null,
-            buffer: null
         };
-        if ((rule as QueryDeclaration).decl) {            
-            const declExpr = processStream(rule as Stream, walker);
-            if (declExpr.length) {
-                ruleExp.fn = declExpr[0].fn;
-                ruleExp.buffer = declExpr[0].buffer;
-                return declExpr.map((decl)=> {
-                    decl.next = ruleExp;
-                    return decl;
-                });
-            }            
+        if (!expr.value.length) {
+            const value: QDeclaration = { prop: "*" };
+            expr.value = [value];
         }
-        return [ruleExp];
-    } else {
-        return [];
-    }
+        fn(expr);
+    });
 }
 
-export default function processQuery(stream: Stream, streamQuery: Query, walker: StreamPipe) : Query {
-    processStream(stream, walker).forEach((expr)=> {
-        const list = (streamQuery as any)[expr.type];
-        if (list) {
-            add<QueryExpression>(expr, list);
-        }
-    });
-    return streamQuery;
+function processStreamRule(
+    fn: (expr: QueryExpression) => void, 
+    rule: QueryRuleDefinition & QueryDeclaration
+) {
+    const ruleExp: QueryExpression = {
+        enter: rule.enter,
+        leave: rule.leave,
+        walker: null,
+        type: "rule",
+        value: processRule(rule as QueryRuleDefinition),
+        next: null
+    };
+    if ((rule as QueryDeclaration).decl) {            
+        processQuery(expr => {
+            expr.next = ruleExp;
+            fn(expr);
+        }, rule as Stream);
+    }
+    fn(ruleExp);
+}
+
+export default function processQuery(fn: (expr: QueryExpression) => void, stream: Stream): void {
+    if ((stream as QueryDeclaration).decl) {
+        processStreamDecl(fn, (stream as QueryDeclaration).decl);        
+    } else if ((stream as QueryRule).rule) {
+        processStreamRule(fn, (stream as QueryRule).rule);
+    }
 }

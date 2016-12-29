@@ -57,13 +57,17 @@ export function matchRule(rule: Rule, expr: QueryExpression): boolean {
         // TODO: fix according postcss
         if (Array.isArray(item)) {
             for (let subitem of item) {
-                if (cmp(subitem, rule.selector)) {
-                    return true;
+                for(let selector of rule.selectors) {
+                    if (cmp(subitem, selector)) {
+                        return true;
+                    }
                 }
             }
         } else {
-            if (cmp(item, rule.selector)) {
-                return true;
+            for(let selector of rule.selectors) {
+                if (cmp(item, selector)) {
+                    return true;
+                }
             }
         }   
     }

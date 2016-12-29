@@ -10,5 +10,6 @@
 }
 
 .test-2 {
+    color: var(--null-color, white);
     background: var(--background-color);
 }

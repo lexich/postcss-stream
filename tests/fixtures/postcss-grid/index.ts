@@ -66,7 +66,6 @@ export default function(options?: Options) {
                         decl.remove();
                     });
                 } catch(e) {
-                    console.log(e.stack);
                     throw decl.error(e.message, { plugin: 'postcss-grid' });
                 }
             }

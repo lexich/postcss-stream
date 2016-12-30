@@ -5,10 +5,7 @@ import expressionByType from "./expressionByType";
 import match from "./match";
 import {init, add, NONE, LinkedItemList, isEmpty, shift} from "./linkedlist";
 import overwrite from "./overwrite";
-import { setMeta, getMeta, getMetaObject } from "./meta";
-
-
-
+import metaService from "./meta";
 
 export default class StreamPipe {
     public query: Query = { 
@@ -74,19 +71,17 @@ export default class StreamPipe {
     private queueSkipNodes = init<MNode>();
 
     skipNode(node: MNode) {
-        setMeta(node, "skip", true);
+        metaService.get(node).skip = true;
         add(node, this.queueSkipNodes);
     }
 
     runNodesBuffer() {
         while(!isEmpty(this.queueSkipNodes)) {
             const node = shift(this.queueSkipNodes);
-            if (node.__meta__) {
-                node.__meta__.skip = false;
-            }
+            metaService.get(node).skip = false;            
             this.walk(node, "enter");
-            if ((node as Container).each) {
-                this.each(node as Container);
+            if (((node as any) as Container).each) {
+                this.each(((node as any) as Container));
             }
             this.walk(node, "leave");
         }
@@ -94,20 +89,20 @@ export default class StreamPipe {
             this.nextWalker.runNodesBuffer();
         }
     }
-
     each(css: Container) {
         css.each((child, i)=> {
-            this.walk(child, "enter");
+            this.walk(child as MNode, "enter");
             if ((child as Container).each) {
                 this.each((child as Container));
             }
-            this.walk(child, "leave");
+            this.walk(child as MNode, "leave");
         });
     }
     
     walk = (child: MNode, type: "enter" | "leave")=> {
         // node add to walker queue
-        const meta = child.__meta__ || getMetaObject(child);
+
+        const meta = metaService.get(child);
         if (meta.skip) {
             return;
         }

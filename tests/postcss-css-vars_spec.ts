@@ -1,11 +1,11 @@
 import * as postcss from 'postcss';
-import test, { ContextualTestContext } from 'ava';
+import test from 'ava';
 import stream from "./fixtures/postcss-css-vars";
 import plugin from "../src";
 import {readFileSync} from 'fs';
 import {join} from 'path';
 
-function run(t: ContextualTestContext, code: string) {
+function run(code: string) {
     return postcss().use(plugin([stream()])).process(code);
 }
 
@@ -18,7 +18,7 @@ test("test.css", t => {
     const expected = readFileSync(
         join(folder, 'test.expected.css'), 'utf-8'
     ).toString();
-    return run(t, code).then(result => {
+    return run(code).then(result => {
         t.deepEqual(result.css, expected);
         t.deepEqual(result.warnings().length, 0);
     });

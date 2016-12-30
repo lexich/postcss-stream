@@ -1,21 +1,109 @@
 import { MNode } from "./interface";
-import { getMeta, setMeta } from "./meta";
+import metaService from "./meta";
 import StreamPipe from "./streampipe";
 
 
+function skipNode(node: MNode) {
+    if (!node) { return; }
+    const { pipe } = metaService.get(node);
+    if (pipe) {
+        pipe.skipNode(node);
+    }
+}
+
+function patchProto(classObj: any) {
+    const proto = classObj.prototype;
+    const insertBefore = proto.insertBefore;
+    if (insertBefore instanceof Function) {
+        proto.insertBefore = function(exist: any, add: any) {
+            const ret = insertBefore.call(this, exist, add);
+            let len = Array.isArray(add) ? add.length : 1;
+            let index = this.index(exist);
+            while (len) {
+                len--;
+                index--;                
+                skipNode(this.nodes[index]);
+            }
+            return ret;
+        };
+    }
+    
+    const insertAfter = proto.insertAfter;
+    if (insertAfter instanceof Function) {
+        proto.insertAfter = function(exist: any, add: any) {
+            const ret = insertAfter.call(this, exist, add);
+            let len = Array.isArray(add) ? add.length : 1;
+            let index = this.index(exist);
+            while (len) {
+                len--;
+                index++;
+                skipNode(this.nodes[index]);
+            }
+            return ret;
+        };
+    }
+
+    const append = proto.append;
+    if (append instanceof Function) {
+        proto.append = function(...children: any[]) {
+            const ret = append.apply(this, children);
+            const len = children.length;
+            const lenNodes = this.nodes.length;
+            for (let i = 0; i < len; i++) {
+                skipNode(this.nodes[lenNodes - 1 - i]);
+            }
+            return ret;
+        };
+    }
+    const prepend = proto.prepend;
+    if (prepend instanceof Function) {
+        proto.prepend = function(...children: any[]) {
+            const ret = prepend.apply(this, children);
+            const len = children.length;
+            for (let i = 0; i < len; i++) {
+                skipNode(this.nodes[i]);
+            }
+            return ret;
+        };
+    }
+
+    const clone = proto.clone;
+    if (clone instanceof Function) {
+        proto.clone = function(overwrite: any) {
+            const ret = clone.call(this, overwrite);
+            metaService.clone(ret, this);
+            return ret;
+        };
+    }
+}
+
+
+[
+    require("postcss/lib/declaration"),
+    require("postcss/lib/rule"),
+    require("postcss/lib/root"),
+    require("postcss/lib/at-rule"),
+    require("postcss/lib/comment"),
+    require("postcss/lib/node"),
+    require("postcss/lib/container")
+].forEach(patchProto);
+
 
 export default function overwrite<T>(child: MNode, pipe: StreamPipe): T | MNode {
-    setMeta(child, "pipe", pipe);
-    const proxy = getMeta<MNode>(child, "proxy");
-    if (proxy) {
-        return proxy;
+    const meta = metaService.get(child);
+    meta.pipe = pipe;
+    
+    if (meta.proxy) {
+        return meta.proxy;
     } else {
-        return setMeta<MNode>(child, "proxy", new Proxy<MNode>(child, {
+        return meta.proxy = new Proxy<MNode>(child, {
             set(target: MNode, prop: string, value: any, receiver: any) {
                 if (target) {
                     (target as any)[prop] = value;
-                    const pipe = getMeta<StreamPipe>(child, "pipe");
-                    pipe.skipNode(child);                    
+                    const { pipe } =  metaService.get(child);
+                    if (pipe) {
+                        pipe.skipNode(child);
+                    }
                     return true;
                }
                return false;
@@ -29,21 +117,19 @@ export default function overwrite<T>(child: MNode, pipe: StreamPipe): T | MNode 
                     if (getter instanceof Function) {
                         return getter;
                     } else {
-                        return overwrite(getter, getMeta<StreamPipe>(child, "pipe"));
+                        return overwrite(getter, metaService.get(child).pipe);
                     }
-                } else if (prop === "$$self") {
-                    return target;
                 } else if (prop === "index") {
-                    const key = `__${prop}`;
-                    return getMeta<any>(target, key) || 
-                           setMeta<any>(target, key, function(proxy: MNode) {
-                               const node: MNode = proxy ? (proxy as any).$$self : proxy;
-                              return (target as any).index(node);
-                           });
+                    const meta = metaService.get(child);
+                    return meta.fnIndex || (meta.fnIndex = function(proxy: number | MNode): number | MNode {
+                        const child = (typeof proxy === "number" || proxy instanceof Number) ? 
+                            proxy : metaService.get(proxy).self;
+                        return (target as any).index(child);
+                    });
                 } else {
                     return getter;
                 }
             }
-        }));
+        });
     }
 }

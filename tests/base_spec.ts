@@ -4,6 +4,7 @@ import test, { ContextualTestContext } from 'ava';
 import { Stream } from "../src/interface";
 import plugin, {createStream} from '../src/';
 
+
 function run(t: ContextualTestContext, input: string, output: string, ...opts: Stream[][]) {
     const walkers: StreamPipe[] = opts.map<StreamPipe>(createStream);
     return postcss(plugin(walkers)).process(input)
@@ -12,6 +13,7 @@ function run(t: ContextualTestContext, input: string, output: string, ...opts: S
             t.deepEqual(result.warnings().length, 0);
         });
 }
+
 
 test('simple change decl with [color]', t => {
     return run(t,
@@ -145,6 +147,35 @@ test('overwriting changes decl with 2 streams', t => {
                 value: 'red',
                 enter(child: postcss.Declaration) {
                     child.value = 'green';
+                }
+            }
+        }]
+    );
+});
+
+test("insert before", t => {
+    return run(t, 
+        ".test { color: red; }",
+        ".test1 { color: black; }\n.test { color: red; }", [{
+            rule: {
+                selector: ".test",
+                decl: {
+                    prop: "color",
+                    value: "red",
+                    enter(decl: postcss.Declaration) {
+                        decl.parent.cloneBefore({ selector: ".test1"});
+                    }
+                }
+            }
+        }, {
+            rule: {
+                selector: ".test1",
+                decl: {
+                    prop: "color",
+                    value: "red",
+                    enter(decl: postcss.Declaration) {
+                        decl.value = "black";
+                    }
                 }
             }
         }]

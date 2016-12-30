@@ -65,11 +65,5 @@ export type StreamDeclaration = string | string[] | QDeclaration | QDeclaration[
 export type QRule = StringOrRegexpOrFunction | StringOrRegexpOrFunction[];
 
 export interface MNode extends Node {
-    __meta__?: {
-        proxy?: MNode,
-        pipe: StreamPipe,
-        skip: boolean,
-        expression?: QueryExpression
-        stage: "enter" | "leave" | null
-    };
+    id: number;
 }

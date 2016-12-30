@@ -5,8 +5,10 @@ import StreamPipe from "./streampipe";
 export interface MetaObject {
     self: MNode;
     proxy?: MNode;
+    proxyNodes?: MNode[];
     pipe?: StreamPipe;
     skip: boolean;
+    remove: boolean;
     expression?: QueryExpression;
     stage: "enter" | "leave" | null;
 }
@@ -43,8 +45,10 @@ export class Meta {
         return this.map[id] || (this.map[id] = {
             self: node,
             proxy: null,
+            proxyNodes: null,
             pipe: null,
             skip: false,
+            remove: false,
             expression: null,
             stage: null
         });

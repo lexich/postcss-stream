@@ -103,7 +103,7 @@ export default class StreamPipe {
         // node add to walker queue
 
         const meta = metaService.get(child);
-        if (meta.skip) {
+        if (meta.skip || meta.remove) {
             return;
         }
         const queries: LinkedItemList<QueryExpression> = expressionByType(this.query, child.type);
@@ -129,7 +129,7 @@ export default class StreamPipe {
                 meta.stage = type;
                 const node = overwrite(child, this) as MNode;
                 fn.call(this.scope as any, node); // TODO: fix
-                if (meta.skip) {
+                if (meta.skip || meta.remove) {
                     return;
                 }
             }

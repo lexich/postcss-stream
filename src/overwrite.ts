@@ -75,6 +75,15 @@ function patchProto(classObj: any) {
             return ret;
         };
     }
+
+    const index = proto.index;
+    if (index instanceof Function) {
+        proto.index = function(node: MNode) {
+            const child = (typeof node === "number" || node instanceof Number) ? 
+                            node : metaService.get(node).self;
+            return index.call(this, child);
+        };
+    }
 }
 
 
@@ -119,13 +128,6 @@ export default function overwrite<T>(child: MNode, pipe: StreamPipe): T | MNode 
                     } else {
                         return overwrite(getter, metaService.get(child).pipe);
                     }
-                } else if (prop === "index") {
-                    const meta = metaService.get(child);
-                    return meta.fnIndex || (meta.fnIndex = function(proxy: number | MNode): number | MNode {
-                        const child = (typeof proxy === "number" || proxy instanceof Number) ? 
-                            proxy : metaService.get(proxy).self;
-                        return (target as any).index(child);
-                    });
                 } else {
                     return getter;
                 }

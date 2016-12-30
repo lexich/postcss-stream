@@ -9,7 +9,6 @@ export interface MetaObject {
     skip: boolean;
     expression?: QueryExpression;
     stage: "enter" | "leave" | null;
-    fnIndex?: (proxy: MNode | number) => number | MNode;
 }
 
 
@@ -47,8 +46,7 @@ export class Meta {
             pipe: null,
             skip: false,
             expression: null,
-            stage: null,
-            fnIndex: null
+            stage: null
         });
     }
 }

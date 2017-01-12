@@ -6,6 +6,7 @@ function getScopeName(selector: string) {
     return (!selector || selector === ":root") ? undefined : selector;
 }
 
+
 export default function() {
     return createStream([{
         rule: {

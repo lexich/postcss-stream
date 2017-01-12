@@ -1,7 +1,7 @@
 import { MNode } from "./interface";
 import metaService from "./meta";
 import StreamPipe from "./streampipe";
-
+import "proxy-polyfill";
 
 function skipNode(node: MNode) {
     if (!node) { return; }
@@ -126,7 +126,7 @@ export default function overwrite<T>(child: MNode, pipe: StreamPipe): T | MNode 
         return meta.proxy;
     } else {
         return meta.proxy = new Proxy<MNode>(child, {
-            set(target: MNode, prop: string, value: any, receiver: any) {
+            set(target: MNode, prop: string, value: any, receiver: any): boolean {
                 if (target) {
                     (target as any)[prop] = value;
                     const { pipe } =  metaService.get(child);
@@ -142,7 +142,7 @@ export default function overwrite<T>(child: MNode, pipe: StreamPipe): T | MNode 
                     return undefined;
                 }                
                 const getter = (target as any)[prop];
-                if (prop === "parent" && getter) {
+                if ((prop === "parent" || prop === "next" || prop === "prev") && getter) {
                     if (getter instanceof Function) {
                         return getter;
                     } else {
@@ -152,12 +152,13 @@ export default function overwrite<T>(child: MNode, pipe: StreamPipe): T | MNode 
                     const meta = metaService.get(target);
                     if (!meta.proxyNodes) {
                         meta.proxyNodes = new Proxy<MNode[]>(getter, {
-                            set(target: MNode[], prop: string, value: any, receiver: any) {
+                            set(target: MNode[], prop: string, value: any, receiver: any) : boolean {
                                 const node = metaService.get(value as MNode).self;
                                 skipNode(node);
                                 target[(prop as any) as number] = node;
+                                return true;
                             },
-                            get(target: MNode[], prop: string) {
+                            get(target: MNode[], prop: string) : any {
                                 if (prop === "indexOf" || prop === "length") {
                                     return target[prop];
                                 }

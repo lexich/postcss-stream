@@ -106,7 +106,6 @@ function patchProto(classObj: any) {
     }
 }
 
-
 [
     require("postcss/lib/declaration"),
     require("postcss/lib/rule"),
@@ -125,7 +124,7 @@ export default function overwrite<T>(child: MNode, pipe: StreamPipe): T | MNode 
     if (meta.proxy) {
         return meta.proxy;
     } else {
-        return meta.proxy = new Proxy<MNode>(child, {
+        const proxy = new Proxy<MNode>(child, {
             set(target: MNode, prop: string, value: any, receiver: any): boolean {
                 if (target) {
                     (target as any)[prop] = value;
@@ -151,7 +150,7 @@ export default function overwrite<T>(child: MNode, pipe: StreamPipe): T | MNode 
                 } else if (prop === "nodes") {
                     const meta = metaService.get(target);
                     if (!meta.proxyNodes) {
-                        meta.proxyNodes = new Proxy<MNode[]>(getter, {
+                        const proxyNodes = new Proxy<MNode[]>(getter, {
                             set(target: MNode[], prop: string, value: any, receiver: any) : boolean {
                                 const node = metaService.get(value as MNode).self;
                                 skipNode(node);
@@ -175,6 +174,7 @@ export default function overwrite<T>(child: MNode, pipe: StreamPipe): T | MNode 
                                 return overwrite(item, pipe);
                             }
                         });
+                        meta.proxyNodes = proxyNodes as any;
                     }
                     return meta.proxyNodes;
                 
@@ -183,5 +183,6 @@ export default function overwrite<T>(child: MNode, pipe: StreamPipe): T | MNode 
                 }
             }
         });
+        return meta.proxy = (proxy as any);
     }
 }

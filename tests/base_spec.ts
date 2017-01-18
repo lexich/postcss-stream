@@ -3,7 +3,6 @@ import test, { ContextualTestContext } from 'ava';
 import { Query } from "../src/traverse";
 import plugin from '../src/';
 
-/*
 function run(t: ContextualTestContext, input: string, output: string, ...opts: Query[][]) {
     const queries = opts.reduce<Query[]>((memo, queries)=> {
         for (let query of queries) {
@@ -171,45 +170,3 @@ test("insert before", t => {
         }]
     );
 });
-*/
-const t:any = null;
-function runT(t:any, input: string, output:string,...opts: Query[][]) {
-    const queries = opts.reduce<Query[]>((memo, queries)=> {
-        for (let query of queries) {
-            memo[memo.length] = query;
-        }
-        return memo;
-    }, []);
-    return postcss(plugin(queries)).process(input)
-        .then( result => {
-            console.log(result.css);
-            console.log(output);
-        }, err => console.log(err));
-}
-
-runT(t,
-        ".test { color: red; }",
-        ".test1 { color: black; }\n.test { color: red; }", [{
-            rule: {
-                selector: ".test",
-                decl: {
-                    prop: "color",
-                    value: "red",
-                    enter(decl: postcss.Declaration) {
-                        decl.parent.cloneBefore({ selector: ".test1"});
-                    }
-                }
-            }
-        }, {
-            rule: {
-                selector: ".test1",
-                decl: {
-                    prop: "color",
-                    value: "red",
-                    enter(decl: postcss.Declaration) {
-                        decl.value = "black";
-                    }
-                }
-            }
-        }]
-    );

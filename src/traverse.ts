@@ -61,22 +61,31 @@ export function fastIterator(css: postcss.Root, callback: (child: postcss.Node, 
 }
 
 interface Visitor {
-    refEnter: number;
-    refLeave: number;
+    ref: number;
     type: string;
     match: (node: postcss.Node) => boolean;
-    enter?: (node: postcss.Node) => any;
-    leave?: (node: postcss.Node) => any;
+    fn?: (node: postcss.Node) => any;
     parent?: Visitor;
 }
 
+interface VisitorContrainer {
+    enter: Visitor[];
+    leave: Visitor[];
+}
+
 interface RefNode extends postcss.Node {
-    _ref: number;
+    _refEnter?: number;
+    _refLeave?: number;
 }
 
 export function traverse(css: postcss.Root, queries: Query[]) {
     let isDirty: boolean;
-    let ref: number = 0;
+    const iter = { val: 1 };
+
+    const visitors: VisitorContrainer = { enter: [], leave: [] };
+    queries.forEach((query)=> {
+        compile(query, iter, null, visitors);
+    });
 
     const match = function(node: postcss.Node, visit: Visitor) {
         if (!visit.match(node)) { return false; }
@@ -90,57 +99,26 @@ export function traverse(css: postcss.Root, queries: Query[]) {
         return true;
     };
 
-    const iterateVisitors = function(node: postcss.Node, index: number, enter: boolean, visitors: Visitor[]) {
-        ref = (node as RefNode)._ref || 0;
-        let newRef = ref;
-        for (let visit of visitors) {
-            // skip visitor if it isn't in scope
-            if (enter) {
-                if (ref + 1 !== visit.refEnter) {
-                    continue;
-                }
-                newRef = visit.refEnter;
-            } else {
-                if (ref + 1 !== visit.refLeave) {
-                    continue;
-                }
-                newRef = visit.refLeave;
-            }
-
-            if (!ref && ref >= visit.refLeave) {
-                // all visit were marked node
+    const iterate = function(node: postcss.Node, index: number, enter: boolean) {
+        let ref = (enter ? (node as RefNode)._refEnter : (node as RefNode)._refLeave) || 0;
+        const arr = enter ? visitors.enter : visitors.leave;
+        for(let visit of arr) {
+            if (ref >= visit.ref) {
                 continue;
+            } else {
+                ref = visit.ref;
             }
-            if (enter && visit.enter && ref < visit.refEnter) {
-                if (match(node, visit)) {
-                    // if visitor executed ast is dirty
-                    isDirty = true;
-                    visit.enter(node);
-                }
-            } else if (!enter && visit.leave) {
-                if (match(node, visit)) {
-                    // if visitor executed ast is dirty
-                    isDirty = true;
-                    visit.leave(node);
-                }
-            }
-            (node as RefNode)._ref = newRef;
-        }
-    };
-    const iter = { val: 0 };
-    const visitors = queries.reduce<Visitor[]>((memo, query)=> {
-        const visitors = compile(query, iter);
-        if (visitors) {
-            for (let visit of visitors) {
-                memo[memo.length] = visit;
+            if (visit.type !== node.type) { continue; }
+            if (match(node, visit)) {
+                isDirty = true;
+                visit.fn(node);
             }
         }
-        return memo;
-    }, []);
-
-
-    const iterate = function (node: postcss.Node, index: number, enter: boolean) {
-        return iterateVisitors(node, index, enter, visitors);
+        if (enter) {
+            (node as RefNode)._refEnter = ref;
+        } else {
+            (node as RefNode)._refLeave = ref;
+        }
     };
 
     do {
@@ -184,32 +162,37 @@ export interface QueryComment extends QueryBaseType<postcss.Comment> {}
 export interface QueryRoot extends QueryBaseType<postcss.Root> {}
 
 const ATTRS = ['decl', 'rule', 'atrule', 'comment', 'root'];
-export function compile(query: Query, iter: {val: number}, parent?: Visitor): Visitor[] | null {
+export function compile(query: Query, iter: {val: number}, parent: Visitor, container: VisitorContrainer): VisitorContrainer | null {
     if (!query) { return null; }
     let anyQuery: any;
-    const visitors: Visitor[] = [];
+    if (!container) {
+        container = { enter:[], leave: [] };
+    }
     for (let type of ATTRS) {
         anyQuery = (query as any)[type];
         if (anyQuery) {
-            const refEnter = ++iter.val;
-            const visit: Visitor = {
-                type,
-                refEnter,
-                refLeave: -1,
-                enter: anyQuery.enter,
-                leave: anyQuery.leave,
-                parent,
-                match: compileMatcher(query, type)
+            const match = compileMatcher(query, type);
+            const visitEnter = {
+                type, match, parent,
+                ref: iter.val,
+                fn: anyQuery.enter,
             };
-            const children = compile(anyQuery, iter, visit);
-            visit.refLeave = ++iter.val;
-            visitors[visitors.length] = visit;
-            for(let child of children) {
-                visitors[visitors.length] = child;
+            iter.val += 1;
+            if (visitEnter.fn) {
+                container.enter[container.enter.length] = visitEnter;
             }
+            compile(anyQuery, iter, visitEnter, container);
+            if (anyQuery.leave) {
+                container.leave[container.leave.length] =  {
+                    type, match, parent,
+                    ref: iter.val,
+                    fn: anyQuery.leave,
+                };
+            }
+            iter.val += 1;
         }
     }
-    return visitors;
+    return container;
 }
 
 export function comparator(cmp: MatcherType, prop: string, node: postcss.Node): boolean {
@@ -234,33 +217,35 @@ export function comparator(cmp: MatcherType, prop: string, node: postcss.Node): 
     }
 }
 
+function trueMatcher(node: postcss.Node): boolean {
+    return true;
+}
+
 const MATCHER = {
     decl({decl}: QueryDeclaration): MatcherFunctor {
         if (!decl) { return trueMatcher; }
-        const { important, prop, value } = decl;
         return function(node: postcss.Declaration): boolean {
             if (!node || node.type !== "decl") { return false; }
-            if (important !== undefined && important !== node.important) {
+            if (this.important !== undefined && this.important !== node.important) {
                 return false;
             }
-            if (prop !== undefined && !comparator(prop, node.prop, node)) {
+            if (this.prop !== undefined && !comparator(this.prop, node.prop, node)) {
                 return false;
             }
-            if (value !== undefined && !comparator(value, node.value, node)) {
+            if (this.value !== undefined && !comparator(this.value, node.value, node)) {
                 return false;
             }
             return true;
-        };
+        }.bind(decl);
     },
     rule({rule}: QueryRule): MatcherFunctor {
         if (!rule) { return trueMatcher; }
-        const { selector } = rule;
         return function(node: postcss.Rule): boolean {
             if (!node || node.type !== "rule") { return false; }
-            if (selector !== undefined) {
+            if (this.selector !== undefined) {
                 let isMatch = false;
-                for(let selector of node.selectors) {
-                    if (comparator(selector, selector, node)) {
+                for(let item of node.selectors) {
+                    if (comparator(this.selector, item, node)) {
                         isMatch = true;
                         break;
                     }
@@ -268,41 +253,35 @@ const MATCHER = {
                 if (!isMatch) { return false;}
             }
             return true;
-        };
+        }.bind(rule);
     },
     atrule({atrule}: QueryAtRule): MatcherFunctor {
         if (!atrule) { return trueMatcher; }
-        const { name, params } = atrule;
         return function(node: postcss.AtRule): boolean {
             if (!node || node.type !== "atrule") { return false; }
-            if (name !== undefined && !comparator(name, node.name, node)) {
+            if (this.name !== undefined && !comparator(this.name, node.name, node)) {
                 return false;
             }
-            if (params !== undefined && !comparator(params, node.params, node)) {
+            if (this.params !== undefined && !comparator(this.params, node.params, node)) {
                 return false;
             }
             return true;
-        };
+        }.bind(atrule);
     },
     comment({comment}: QueryComment): MatcherFunctor {
         if (!comment) { return trueMatcher; }
-        const { text } = comment;
         return function(node: postcss.Comment): boolean {
             if (!node || node.type !== "comment") { return false; }
-            if (text !== undefined && !comparator(text, node.text, node)) {
+            if (this.text !== undefined && !comparator(this.text, node.text, node)) {
                 return false;
             }
             return true;
-        };
+        }.bind(comment);
     },
     root(query: QueryRoot): MatcherFunctor {
         return trueMatcher;
     }
 };
-
-function trueMatcher(node: postcss.Node): boolean {
-    return true;
-}
 
 export function compileMatcher(query: Query, type: string): MatcherFunctor {
     const matcher = (MATCHER as any)[type];

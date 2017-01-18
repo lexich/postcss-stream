@@ -1,6 +1,6 @@
 import * as postcss from 'postcss';
 import {transformColorSafe} from './helper';
-import {Query} from '../../../src/traverse';
+import {Query} from '../../../src/interfaces';
 
 const query: Query[] = [{
     decl: {

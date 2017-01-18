@@ -1,7 +1,7 @@
 // https://github.com/andyjansson/postcss-grid/blob/master/index.js
 import getHelper, { Options } from "./helper";
 import {Declaration} from 'postcss';
-import {Query} from '../../../src/traverse';
+import {Query} from '../../../src/interfaces';
 
 export default function(options?: Options): Query[] {
     const opts = options || {

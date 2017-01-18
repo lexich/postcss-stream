@@ -1,6 +1,6 @@
 import * as postcss from 'postcss';
 import test, { ContextualTestContext } from 'ava';
-import { Query } from "../src/traverse";
+import { Query } from "../src/interfaces";
 import plugin from '../src/';
 
 function run(t: ContextualTestContext, input: string, output: string, ...opts: Query[][]) {

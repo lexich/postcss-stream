@@ -1,7 +1,7 @@
 
 import {Declaration, Rule} from 'postcss';
 import {valueProcessor} from './helper';
-import {Query} from '../../../src/traverse';
+import {Query} from '../../../src/interfaces';
 
 function getScopeName(selector: string) {
     return (!selector || selector === ":root") ? undefined : selector;

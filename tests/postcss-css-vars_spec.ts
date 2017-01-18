@@ -11,7 +11,7 @@ function run(code: string) {
 
 const folder = join(__dirname, "..", "..", 'tests', 'fixtures', 'postcss-css-vars');
 
-test("test.css", t => {
+test.skip("test.css", t => {
     const code = readFileSync(
         join(folder, 'test.css'), 'utf-8'
     ).toString();

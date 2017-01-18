@@ -1,18 +1,18 @@
-import {createStream} from '../../../src';
+
 import {Declaration, Rule} from 'postcss';
 import {valueProcessor} from './helper';
+import {Query} from '../../../src/traverse';
 
 function getScopeName(selector: string) {
     return (!selector || selector === ":root") ? undefined : selector;
 }
 
 
-export default function() {
-    return createStream([{
+export default function() : Query[] {
+    return [{
         rule: {
-            selector: "*",
             decl: {
-                prop: (str: string)=> !!str && str.indexOf("--") >= 0,
+                prop: (node: Declaration)=> node.prop.indexOf("--") >= 0,
                 enter(decl: Declaration) {
                     const scopeName = getScopeName( (decl.parent as Rule).selector);
                     this.set(decl.prop, decl.value, scopeName);
@@ -27,9 +27,8 @@ export default function() {
         }
     },{
         decl: {
-            prop: "*",
-            value(s?: string) {
-                return !!s && s.indexOf("var(") >= 0;
+            value(node: Declaration) {
+                return node.value.indexOf("var(") >= 0;
             },
             enter(decl: Declaration) {
                 const scopeName = getScopeName( (decl.parent as Rule).selector);
@@ -38,5 +37,5 @@ export default function() {
                 );
             }
         }
-    }]);
+    }];
 }

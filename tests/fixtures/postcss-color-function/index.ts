@@ -1,12 +1,11 @@
-import {createStream} from '../../../src';
 import * as postcss from 'postcss';
 import {transformColorSafe} from './helper';
+import {Query} from '../../../src/traverse';
 
-export default createStream([{
+const query: Query[] = [{
     decl: {
-        prop: "*",
-        value(s?: string): boolean {
-            return !!s && s.indexOf('color(') >= 0;
+        value(node: postcss.Declaration): boolean {
+            return node.value.indexOf('color(') >= 0;
         },
         enter(child: postcss.Declaration) {
             child.value = transformColorSafe(
@@ -14,4 +13,6 @@ export default createStream([{
             );
         }
     }
-}]);
+}];
+
+export default query;

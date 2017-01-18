@@ -3,5 +3,5 @@ npm-debug.log
 /src/*.js*
 /src/**/*.js*
 /tests/*.js*
-/lib/*
+/lib/tests/*
 /.vscode

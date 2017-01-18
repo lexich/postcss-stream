@@ -1,9 +1,9 @@
 // https://github.com/andyjansson/postcss-grid/blob/master/index.js
-import {createStream} from '../../../src';
 import getHelper, { Options } from "./helper";
 import {Declaration} from 'postcss';
+import {Query} from '../../../src/interfaces';
 
-export default function(options?: Options) {
+export default function(options?: Options): Query[] {
     const opts = options || {
         columns: 12,
 		maxWidth: 960,
@@ -12,12 +12,11 @@ export default function(options?: Options) {
     };
     const helper = getHelper(opts);
     const isLast = /\s*!last\s*$/;
-    return createStream([{
+    return [{
         decl: {
-            prop: "*",
-            value(s?: string) {
-                return !!s && s.indexOf("grid-width(") >= 0;
-            },    
+            value(node: Declaration) {
+                return node.value.indexOf("grid-width(") >= 0;
+            },
             enter(decl: Declaration) {
                 try {
                     decl.value = helper.callGridWidth(decl.value);
@@ -28,9 +27,8 @@ export default function(options?: Options) {
         }
      }, {
         decl: {
-            prop: "*",
-            value(s?: string) {
-                return !!s && s.indexOf("grid-gutter(") >= 0;
+            value(node: Declaration) {
+                return node.value.indexOf("grid-gutter(") >= 0;
             },
             enter(decl: Declaration) {
                 decl.value = helper.callGridGutter(decl.value);
@@ -41,25 +39,25 @@ export default function(options?: Options) {
             prop: "grid-column",
             enter(decl: Declaration) {
                 try {
-                    
+
                     helper.callGridColumn(decl.value, function(span: number, columns: number) {
                         decl.parent.append({
                             prop: 'float', value: 'left'
                         }).source = decl.source;
                         decl.parent.append({
-                            prop: 'width', 
+                            prop: 'width',
                             value: helper.gridWidth(span, columns) + '%'}
                         ).source = decl.source;
 
                         if (!(decl.value.match(isLast))) {
                             if (opts.legacy) {
                                 decl.parent.append({
-                                    prop: 'display', 
+                                    prop: 'display',
                                     value: 'inline'
                                 }).source = decl.source;
                             }
                             decl.parent.append({
-                                prop: 'margin-right', 
+                                prop: 'margin-right',
                                 value: helper.gutterWidth(columns) + '%'
                             }).source = decl.source;
                         }
@@ -88,6 +86,6 @@ export default function(options?: Options) {
                 }
             }
         }
-    }]);
+    }];
 }
 

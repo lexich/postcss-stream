@@ -1,75 +1,14 @@
-import { Declaration, Rule, Node } from "postcss";
-import { QueryExpression, StreamFunctor, QueryProperty, QDeclaration, QRule } from "./interface";
+import * as postcss from "postcss";
+import { Visitor } from "./interfaces";
 
-
-export default function match(node: Node, expr: QueryExpression) {
-    if (expr.type === "decl") {
-        return matchDecl(node as Declaration, expr);
-    } else if (expr.type === "rule") {
-        return  matchRule(node as Rule, expr);
+export default function match(node: postcss.Node, visit: Visitor) {
+    if (!visit.match(node)) { return false; }
+    let vParent = visit.parent;
+    let nParent = node.parent;
+    while(vParent) {
+        if (!vParent.match(nParent)) { return false; }
+        vParent = vParent.parent;
+        nParent = nParent.parent;
     }
-}
-
-export function cmp(matcher: QueryProperty, prop: string): boolean {
-    if (matcher instanceof Function) {
-        return (matcher as StreamFunctor<string, boolean>)(prop);
-    } else if (matcher instanceof RegExp) {
-        return matcher.test(prop);                    
-    } else {
-        if (matcher === "*") {
-            return true;
-        } else {
-            return matcher === prop;
-        }
-    }
-}
-
-export function matchDecl(decl: Declaration, expr: QueryExpression): boolean {    
-    for (let item of expr.value as QDeclaration[]) {        
-        if (!cmp(item.prop, decl.prop)) {
-            continue;
-        }
-        if (item.value !== (void 0)) {
-            if (!cmp(item.value, decl.value || "")) {
-                continue;
-            }
-        }
-        
-        if (expr.next) {
-            if (expr.next.type === "rule" && decl.parent) {
-                if (!matchRule(decl.parent as Rule, expr.next)) {
-                    continue;
-                }
-            } else {
-                continue;
-            }
-        }
-        return true;
-    }    
-    return false;
-}
-
-export function matchRule(rule: Rule, expr: QueryExpression): boolean {
-    if (!expr) { return false; }
-    const { value } = expr;
-    if (!value) { return false; }
-    for (let item of expr.value as QRule[]) {
-        // TODO: fix according postcss
-        if (Array.isArray(item)) {
-            for (let subitem of item) {
-                for(let selector of rule.selectors) {
-                    if (cmp(subitem, selector)) {
-                        return true;
-                    }
-                }
-            }
-        } else {
-            for(let selector of rule.selectors) {
-                if (cmp(item, selector)) {
-                    return true;
-                }
-            }
-        }   
-    }
-    return false;
-}
+    return true;
+};

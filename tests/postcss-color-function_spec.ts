@@ -8,11 +8,11 @@ import plugin from "../src";
 
 function run(t: ContextualTestContext, code: string) {
     return Promise.all([
-        postcss().use(plugin([stream])).process(code),
+        postcss().use(plugin(stream)).process(code),
         postcss().use(colorFunction()).process(code)
     ]).then(result => {
         t.deepEqual(result[0].css, result[1].css);
-        t.deepEqual(result[0].warnings().length, 0);    
+        t.deepEqual(result[0].warnings().length, 0);
     });
 }
 

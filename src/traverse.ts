@@ -1,28 +1,19 @@
 import * as postcss from "postcss";
 import fastIterator from "./iterator";
 import compile from "./compile";
-import { Query, VisitorContrainer, Visitor, RefNode} from "./interfaces"
+import match from "./match";
+import { Query, VisitorContrainer, RefNode} from "./interfaces";
 
 export function traverse(css: postcss.Root, queries: Query[]) {
-    let isDirty: boolean;
+
+    // for dirty check structure of postcss AST
+    let isDirty: boolean = false;
+
     const iter = { val: 1 };
-
     const visitors: VisitorContrainer = { enter: [], leave: [] };
-    queries.forEach((query)=> {
+    for (let query of queries) {
         compile(query, iter, null, visitors);
-    });
-
-    const match = function(node: postcss.Node, visit: Visitor) {
-        if (!visit.match(node)) { return false; }
-        let vParent = visit.parent;
-        let nParent = node.parent;
-        while(vParent) {
-            if (!vParent.match(nParent)) { return false; }
-            vParent = vParent.parent;
-            nParent = nParent.parent;
-        }
-        return true;
-    };
+    }
 
     const iterate = function(node: postcss.Node, index: number, enter: boolean) {
         let ref = (enter ? (node as RefNode)._refEnter : (node as RefNode)._refLeave) || 0;
